@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, CheckConstraint
-from datetime import datetime
+from datetime import datetime,timezone
 from app.database import Base
 from sqlalchemy.orm import relationship
 
@@ -13,7 +13,7 @@ class Order(Base):
         nullable=False,
         default="CREATED"
     )
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
 
     customer = relationship("Customer", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")

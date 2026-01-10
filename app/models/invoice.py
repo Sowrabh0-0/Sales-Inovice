@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, Numeric, ForeignKey, Date, String, DateTime, CheckConstraint
-from datetime import datetime
+from datetime import datetime,timezone
 from app.database import Base
 from sqlalchemy.orm import relationship
 
@@ -26,7 +26,7 @@ class Invoice(Base):
     due_date = Column(Date, nullable=False)
 
     status = Column(String(20), nullable=False, default="UNPAID")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
 
     payments = relationship("Payment", back_populates="invoice")
     order = relationship("Order", back_populates="invoice")

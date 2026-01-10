@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey, Integer, Numeric, String, DateTime, CheckConstraint
-from datetime import datetime
+from datetime import datetime ,timezone
 from app.database import Base
 from sqlalchemy.orm import relationship
 
@@ -10,7 +10,7 @@ class Payment(Base):
     invoice_id = Column(Integer, ForeignKey("invoices.id"), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
     payment_method = Column(String(20), nullable=False)
-    paid_at = Column(DateTime, default=datetime.utcnow)
+    paid_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
 
     invoice = relationship("Invoice", back_populates="payments")
 
