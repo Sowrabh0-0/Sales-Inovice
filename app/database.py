@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 # -------------------------------------------------
 # ENV SELECTION
 # -------------------------------------------------
-DB_ENV = os.getenv("DB_ENV", "cloud")
+DB_ENV = os.getenv("DB_ENV", "local")
 
 if DB_ENV == "local":
     load_dotenv(".env.local")
