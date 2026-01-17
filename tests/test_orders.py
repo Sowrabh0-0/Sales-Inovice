@@ -1,3 +1,4 @@
+import uuid
 from fastapi.testclient import TestClient
 from app.main import app
 
@@ -15,7 +16,7 @@ def test_full_order_flow():
     # -----------------------------
     customer_payload = {
         "name": "Test Customer",
-        "email": "testcustomer@example.com"
+        "email": f"testcustomer_{uuid.uuid4()}@example.com"
     }
 
     customer_res = client.post("/orders/customers", json=customer_payload)
@@ -23,7 +24,7 @@ def test_full_order_flow():
 
     customer_data = customer_res.json()
     assert "id" in customer_data
-    assert customer_data["email"] == "testcustomer@example.com"
+    assert customer_data["email"] == customer_payload["email"]
 
     customer_id = customer_data["id"]
 

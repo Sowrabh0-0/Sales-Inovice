@@ -1,3 +1,4 @@
+import uuid
 from fastapi.testclient import TestClient
 from app.main import app
 
@@ -15,7 +16,7 @@ def test_invoice_flow():
     # -----------------------------
     customer_payload = {
         "name": "Invoice Test Customer",
-        "email": "invoice_test@example.com"
+        "email": f"invoice_test_{uuid.uuid4()}@example.com"
     }
 
     customer_res = client.post("/orders/customers", json=customer_payload)

@@ -1,3 +1,4 @@
+import uuid
 from fastapi.testclient import TestClient
 from app.main import app
 
@@ -15,7 +16,7 @@ def test_payment_flow():
     # -----------------------------
     customer_payload = {
         "name": "Payment Test Customer",
-        "email": "payment_test@example.com",
+        "email": f"payment_test_{uuid.uuid4()}@example.com",
     }
 
     customer_res = client.post("/orders/customers", json=customer_payload)
