@@ -34,7 +34,7 @@ class Invoice(Base):
     # 👉 MySQL compatible
     __table_args__ = (
         CheckConstraint(
-            "status IN ('UNPAID','PARTIALLY_PAID','PAID','OVERDUE')",
+            "status IN ('UNPAID','PARTIALLY_PAID','PAID','OVERDUE', 'CANCELLED')",
             name="check_invoice_status"
         ),
         CheckConstraint(
