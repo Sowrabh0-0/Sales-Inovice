@@ -7,6 +7,8 @@ from app.schemas import InvoiceResponse
 from app.services.invoice_service import (
     create_invoice,
     get_invoice,
+    list_invoices,
+    cancel_invoice,
 )
 
 router = APIRouter(
@@ -14,10 +16,6 @@ router = APIRouter(
     tags=["Invoices"],
 )
 
-
-# -----------------------------
-# CREATE INVOICE FOR AN ORDER
-# -----------------------------
 @router.post(
     "/orders/{order_id}",
     response_model=InvoiceResponse,
@@ -30,14 +28,12 @@ def create_invoice_for_order(
     db: Session = Depends(get_db),
 ):
     try:
-        invoice = create_invoice(
+        return create_invoice(
             db=db,
             order_id=order_id,
             discount_type=discount_type,
             discount_value=discount_value,
         )
-        return invoice
-
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -45,9 +41,6 @@ def create_invoice_for_order(
         )
 
 
-# -----------------------------
-# GET INVOICE BY ID
-# -----------------------------
 @router.get(
     "/{invoice_id}",
     response_model=InvoiceResponse,
@@ -58,9 +51,34 @@ def get_invoice_by_id(
 ):
     try:
         return get_invoice(db, invoice_id)
-
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+@router.get(
+    "",
+    response_model=list[InvoiceResponse],
+)
+def list_all_invoices(
+    db: Session = Depends(get_db),
+):
+    return list_invoices(db)
+
+
+@router.post(
+    "/{invoice_id}/cancel",
+    response_model=InvoiceResponse,
+)
+def cancel_invoice_api(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+):
+    try:
+        return cancel_invoice(db, invoice_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
