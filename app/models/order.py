@@ -21,7 +21,7 @@ class Order(Base):
 
     __table_args__ = (
         CheckConstraint(
-            status.in_(["CREATED", "CONFIRMED"]),
+            status.in_(["CREATED", "CONFIRMED", "CANCELLED"]),
             name="check_order_status"
         ),
     )
