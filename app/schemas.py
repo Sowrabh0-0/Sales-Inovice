@@ -66,6 +66,14 @@ class OrderResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class OrderItemUpdate(BaseModel):
+    product_name: str = Field(..., min_length=1)
+    quantity: int = Field(..., gt=0)
+    unit_price: float = Field(..., gt=0)
+
+class OrderUpdate(BaseModel):
+    items: List[OrderItemUpdate]
+
 
 # -----------------------------
 # 4. INVOICE SCHEMAS
