@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 from datetime import date, datetime
 from typing import List, Optional
 
@@ -18,8 +18,11 @@ class CustomerResponse(BaseModel):
     email: EmailStr
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+class CustomerUpdate(BaseModel):
+    name: str
+    email: EmailStr
 
 
 # -----------------------------
@@ -38,8 +41,7 @@ class OrderItemResponse(BaseModel):
     quantity: int
     unit_price: float
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # -----------------------------
@@ -62,8 +64,7 @@ class OrderResponse(BaseModel):
     created_at: datetime
     items: List[OrderItemResponse]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # -----------------------------
@@ -89,8 +90,7 @@ class InvoiceResponse(BaseModel):
     discount_value: float
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # -----------------------------
@@ -110,5 +110,4 @@ class PaymentResponse(BaseModel):
     payment_method: str
     paid_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
