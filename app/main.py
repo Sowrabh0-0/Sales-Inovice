@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.database import engine, Base
-from app.routers import orders, invoices, payments
+from app.routers import orders, invoices, payments, customers
 
 
 app = FastAPI(
@@ -14,7 +14,7 @@ def health():
     return {"status": "running"}
 
 
-
+app.include_router(customers.router)
 app.include_router(orders.router)
 app.include_router(invoices.router)
 app.include_router(payments.router)
