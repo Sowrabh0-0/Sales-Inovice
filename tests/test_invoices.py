@@ -5,85 +5,141 @@ from app.main import app
 client = TestClient(app)
 
 
-def test_invoice_flow():
-    """
-    End-to-end invoice test:
-    Customer -> Order -> Confirm -> Invoice
-    """
-
-    # -----------------------------
-    # 1. CREATE CUSTOMER
-    # -----------------------------
-    customer_payload = {
+# -----------------------------
+# Helpers
+# -----------------------------
+def create_test_customer():
+    payload = {
         "name": "Invoice Test Customer",
-        "email": f"invoice_test_{uuid.uuid4()}@example.com"
+        "email": f"invoice_{uuid.uuid4()}@example.com",
     }
+    res = client.post("/customers", json=payload)
+    assert res.status_code == 201
+    return res.json()
 
-    customer_res = client.post("/orders/customers", json=customer_payload)
-    assert customer_res.status_code == 201
-    customer_id = customer_res.json()["id"]
 
-    # -----------------------------
-    # 2. CREATE ORDER
-    # -----------------------------
-    order_payload = {
-        "customer_id": customer_id,
-        "items": [
-            {
-                "product_name": "Keyboard",
-                "quantity": 2,
-                "unit_price": 2000
-            },
-            {
-                "product_name": "Monitor",
-                "quantity": 1,
-                "unit_price": 12000
-            }
-        ]
-    }
-
-    order_res = client.post("/orders", json=order_payload)
+def create_and_confirm_order(customer_id: int):
+    order_res = client.post(
+        "/orders",
+        json={
+            "customer_id": customer_id,
+            "items": [
+                {"product_name": "Keyboard", "quantity": 2, "unit_price": 2000},
+                {"product_name": "Monitor", "quantity": 1, "unit_price": 12000},
+            ],
+        },
+    )
     assert order_res.status_code == 201
+    order_id = order_res.json()["id"]
 
-    order_data = order_res.json()
-    order_id = order_data["id"]
-    assert order_data["status"] == "CREATED"
-
-    # -----------------------------
-    # 3. CONFIRM ORDER
-    # -----------------------------
     confirm_res = client.post(f"/orders/{order_id}/confirm")
     assert confirm_res.status_code == 200
-    assert confirm_res.json()["status"] == "CONFIRMED"
 
-    # -----------------------------
-    # 4. CREATE INVOICE
-    # -----------------------------
+    return order_id
+
+
+# -----------------------------
+# 1️⃣ End-to-end invoice flow
+# -----------------------------
+def test_invoice_flow():
+    customer = create_test_customer()
+    order_id = create_and_confirm_order(customer["id"])
+
     invoice_res = client.post(f"/invoices/orders/{order_id}")
     assert invoice_res.status_code == 201
 
-    invoice_data = invoice_res.json()
+    invoice = invoice_res.json()
+    assert invoice["order_id"] == order_id
+    assert invoice["status"] == "UNPAID"
+    assert invoice["subtotal"] > 0
+    assert invoice["tax"] > 0
+    assert invoice["total"] > invoice["subtotal"]
 
-    assert invoice_data["order_id"] == order_id
-    assert invoice_data["status"] == "UNPAID"
-    assert invoice_data["subtotal"] > 0
-    assert invoice_data["tax"] > 0
-    assert invoice_data["total"] > invoice_data["subtotal"]
+    invoice_id = invoice["id"]
 
-    invoice_id = invoice_data["id"]
+    get_res = client.get(f"/invoices/{invoice_id}")
+    assert get_res.status_code == 200
+    assert get_res.json()["id"] == invoice_id
 
-    # -----------------------------
-    # 5. FETCH INVOICE
-    # -----------------------------
-    get_invoice_res = client.get(f"/invoices/{invoice_id}")
-    assert get_invoice_res.status_code == 200
 
-    fetched_invoice = get_invoice_res.json()
-    assert fetched_invoice["id"] == invoice_id
-    assert fetched_invoice["order_id"] == order_id
+# -----------------------------
+# 2️⃣ Duplicate invoice should fail
+# -----------------------------
+def test_duplicate_invoice_fails():
+    customer = create_test_customer()
+    order_id = create_and_confirm_order(customer["id"])
 
-    # -----------------------------
-    # 6. DUPLICATE INVOICE SHOULD FAIL
-    # -----------------------------
-    duplicate_invoice_res = client.post(f"/invoices/orders/{order_id}")
-    assert duplicate_invoice_res.status_code == 400
+    res1 = client.post(f"/invoices/orders/{order_id}")
+    assert res1.status_code == 201
+
+    res2 = client.post(f"/invoices/orders/{order_id}")
+    assert res2.status_code == 400
+
+
+# -----------------------------
+# 3️⃣ Invoice for unconfirmed order fails
+# -----------------------------
+def test_invoice_for_unconfirmed_order_fails():
+    customer = create_test_customer()
+
+    order_res = client.post(
+        "/orders",
+        json={
+            "customer_id": customer["id"],
+            "items": [{"product_name": "Mouse", "quantity": 1, "unit_price": 500}],
+        },
+    )
+    order_id = order_res.json()["id"]
+
+    invoice_res = client.post(f"/invoices/orders/{order_id}")
+    assert invoice_res.status_code == 400
+
+
+# -----------------------------
+# 4️⃣ List invoices
+# -----------------------------
+def test_list_invoices():
+    customer = create_test_customer()
+    order_id = create_and_confirm_order(customer["id"])
+
+    client.post(f"/invoices/orders/{order_id}")
+
+    res = client.get("/invoices")
+    assert res.status_code == 200
+
+    data = res.json()
+    assert isinstance(data, list)
+    assert len(data) >= 1
+    assert "id" in data[0]
+    assert "total" in data[0]
+
+
+# -----------------------------
+# 5️⃣ Cancel invoice
+# -----------------------------
+def test_cancel_invoice_success():
+    customer = create_test_customer()
+    order_id = create_and_confirm_order(customer["id"])
+
+    invoice = client.post(f"/invoices/orders/{order_id}").json()
+    invoice_id = invoice["id"]
+
+    cancel_res = client.post(f"/invoices/{invoice_id}/cancel")
+    assert cancel_res.status_code == 200
+    assert cancel_res.json()["status"] == "CANCELLED"
+
+
+# -----------------------------
+# 6️⃣ Double cancel should fail
+# -----------------------------
+def test_double_cancel_invoice_fails():
+    customer = create_test_customer()
+    order_id = create_and_confirm_order(customer["id"])
+
+    invoice = client.post(f"/invoices/orders/{order_id}").json()
+    invoice_id = invoice["id"]
+
+    client.post(f"/invoices/{invoice_id}/cancel")
+    res = client.post(f"/invoices/{invoice_id}/cancel")
+
+    assert res.status_code == 400
