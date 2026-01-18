@@ -2,6 +2,7 @@ import uuid
 from fastapi.testclient import TestClient
 from app.main import app
 
+
 client = TestClient(app)
 
 
@@ -98,20 +99,31 @@ def test_invoice_for_unconfirmed_order_fails():
 # -----------------------------
 # 4️⃣ List invoices
 # -----------------------------
-def test_list_invoices():
-    customer = create_test_customer()
-    order_id = create_and_confirm_order(customer["id"])
+def test_invoice_filter_by_status():
+    res = client.get("/invoices?status=UNPAID")
+    assert res.status_code == 200
+    for invoice in res.json():
+        assert invoice["status"] == "UNPAID"
 
+
+def test_invoice_filter_by_customer():
+    customer = create_test_customer()
+
+    order_res = client.post(
+        "/orders",
+        json={
+            "customer_id": customer["id"],
+            "items": [{"product_name": "Book", "quantity": 1, "unit_price": 500}],
+        },
+    )
+    order_id = order_res.json()["id"]
+
+    client.post(f"/orders/{order_id}/confirm")
     client.post(f"/invoices/orders/{order_id}")
 
-    res = client.get("/invoices")
+    res = client.get(f"/invoices?customer_id={customer['id']}")
     assert res.status_code == 200
-
-    data = res.json()
-    assert isinstance(data, list)
-    assert len(data) >= 1
-    assert "id" in data[0]
-    assert "total" in data[0]
+    assert len(res.json()) >= 1
 
 
 # -----------------------------
