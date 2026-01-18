@@ -1,3 +1,5 @@
+from datetime import date
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from decimal import Decimal
@@ -62,11 +64,21 @@ def get_invoice_by_id(
     response_model=list[InvoiceResponse],
 )
 def list_all_invoices(
+    status: Optional[str] = None,
+    customer_id: Optional[int] = None,
+    order_id: Optional[int] = None,
+    from_date: Optional[date] = None,
+    to_date: Optional[date] = None,
     db: Session = Depends(get_db),
 ):
-    return list_invoices(db)
-
-
+    return list_invoices(
+        db=db,
+        status=status,
+        customer_id=customer_id,
+        order_id=order_id,
+        from_date=from_date,
+        to_date=to_date,
+    )
 @router.post(
     "/{invoice_id}/cancel",
     response_model=InvoiceResponse,
