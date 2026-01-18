@@ -1,5 +1,6 @@
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 from decimal import Decimal
+from typing import Optional
 from sqlalchemy.orm import Session
 
 from app.models.order import Order
@@ -80,8 +81,34 @@ def get_invoice(db: Session, invoice_id: int) -> Invoice:
         raise ValueError("Invoice not found")
     return invoice
 
-def list_invoices(db: Session) -> list[Invoice]:
-    return db.query(Invoice).order_by(Invoice.id.desc()).all()
+
+def list_invoices(
+    db: Session,
+    status: Optional[str] = None,
+    customer_id: Optional[int] = None,
+    order_id: Optional[int] = None,
+    from_date: Optional[date] = None,
+    to_date: Optional[date] = None,
+) -> list[Invoice]:
+
+    query = db.query(Invoice).join(Order)
+
+    if status:
+        query = query.filter(Invoice.status == status)
+
+    if order_id:
+        query = query.filter(Invoice.order_id == order_id)
+
+    if customer_id:
+        query = query.filter(Order.customer_id == customer_id)
+
+    if from_date:
+        query = query.filter(Invoice.created_at >= from_date)
+
+    if to_date:
+        query = query.filter(Invoice.created_at <= to_date)
+
+    return query.order_by(Invoice.id.desc()).all()
 
 
 def cancel_invoice(db: Session, invoice_id: int) -> Invoice:
