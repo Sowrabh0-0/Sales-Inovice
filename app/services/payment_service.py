@@ -23,6 +23,9 @@ def create_payment(
     invoice = db.get(Invoice, invoice_id)
     if not invoice:
         raise ValueError("Invoice not found")
+    
+    if invoice.status == "CANCELLED":
+        raise ValueError("Cannot pay a cancelled invoice")
 
     if invoice.status == "PAID":
         raise ValueError("Invoice is already fully paid")
