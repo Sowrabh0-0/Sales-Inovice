@@ -11,7 +11,7 @@ def test_refund_flow():
 
     # Create customer
     customer_res = client.post(
-        "/customers",
+        "/customers/create-customer",
         json={
             "name": "Refund Test Customer",
             "email": f"refund_{uuid.uuid4()}@example.com",

@@ -12,7 +12,7 @@ def create_test_customer_helper():
         "name": "Order Test Customer",
         "email": f"order_{uuid.uuid4()}@example.com",
     }
-    res = client.post("/customers", json=payload)
+    res = client.post("/customers/create-customer", json=payload)
     assert res.status_code == 201
     return res.json()
 

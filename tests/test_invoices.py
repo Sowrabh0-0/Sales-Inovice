@@ -14,7 +14,7 @@ def create_test_customer():
         "name": "Invoice Test Customer",
         "email": f"invoice_{uuid.uuid4()}@example.com",
     }
-    res = client.post("/customers", json=payload)
+    res = client.post("/customers/create-customer", json=payload)
     assert res.status_code == 201
     return res.json()
 

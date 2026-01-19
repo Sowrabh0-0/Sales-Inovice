@@ -11,7 +11,7 @@ client = TestClient(app)
 # -----------------------------
 def create_test_customer():
     res = client.post(
-        "/customers",
+        "/customers/create-customer",
         json={
             "name": "Payment Test Customer",
             "email": f"payment_{uuid.uuid4()}@example.com",
