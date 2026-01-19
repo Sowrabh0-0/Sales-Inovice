@@ -30,8 +30,19 @@ def get_customer(db: Session, customer_id: int) -> Customer:
     return customer
 
 
-def list_customers(db: Session) -> list[Customer]:
-    return db.query(Customer).order_by(Customer.id.desc()).all()
+def list_customers_service(
+    db: Session,
+    offset: int = 0,
+    limit: int = 15,
+) -> list[Customer]:
+    return (
+        db.query(Customer)
+        .order_by(Customer.id.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
 
 
 def update_customer(

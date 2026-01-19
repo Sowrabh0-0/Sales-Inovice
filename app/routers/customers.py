@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -6,7 +6,7 @@ from app.schemas import CustomerCreate, CustomerResponse, CustomerUpdate
 from app.services.customer_service import (
     create_customer_service,
     get_customer,
-    list_customers,
+    list_customers_service,
     update_customer,
 )
 
@@ -17,7 +17,7 @@ router = APIRouter(
 )
 
 @router.post(
-    "",
+    "/create-customer",
     response_model=CustomerResponse,
     status_code=status.HTTP_201_CREATED,
 )
@@ -37,6 +37,15 @@ def create_customer_api(
             detail=str(e),
         )
 
+@router.get("/", response_model=list[CustomerResponse])
+def list_customers(
+    page: int = Query(1, ge=1),
+    limit: int = Query(15, ge=1, le=100),
+    db: Session = Depends(get_db),
+):
+    offset = (page - 1) * limit
+    return list_customers_service(db, offset=offset, limit=limit)
+
 
 @router.get("/{customer_id}", response_model=CustomerResponse)
 def get_customer_api(customer_id: int, db: Session = Depends(get_db)):
@@ -46,9 +55,6 @@ def get_customer_api(customer_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail=str(e))
 
 
-@router.get("", response_model=list[CustomerResponse])
-def list_customers_api(db: Session = Depends(get_db)):
-    return list_customers(db)
 
 
 @router.put("/{customer_id}", response_model=CustomerResponse)
