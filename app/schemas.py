@@ -47,6 +47,9 @@ class OrderItemResponse(BaseModel):
 # -----------------------------
 # 3. ORDER SCHEMAS
 # -----------------------------
+class OrderInvoice(BaseModel):
+    id: int
+    status: str
 
 class OrderCreate(BaseModel):
     customer_id: int
@@ -57,14 +60,24 @@ class OrderConfirm(BaseModel):
     status: str = Field(..., pattern="^(CONFIRMED)$")
 
 
+class OrderCustomer(BaseModel):
+    id: int
+    name: str
+
+
 class OrderResponse(BaseModel):
     id: int
     customer_id: int
     status: str
     created_at: datetime
+
+    total: float                      
+    customer: OrderCustomer
     items: List[OrderItemResponse]
+    invoice: OrderInvoice | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class OrderItemUpdate(BaseModel):
     product_name: str = Field(..., min_length=1)
@@ -73,6 +86,7 @@ class OrderItemUpdate(BaseModel):
 
 class OrderUpdate(BaseModel):
     items: List[OrderItemUpdate]
+
 
 
 # -----------------------------
