@@ -3,22 +3,20 @@ from sqlalchemy.orm import Session
 from decimal import Decimal
 
 from app.database import get_db
-from app.schemas import PaymentResponse
+from app.schemas import InvoiceResponse
 from app.services.refund_service import refund_payment
 
 router = APIRouter(
     prefix="/refunds",
     tags=["Refunds"],
 )
-
 @router.post(
     "/invoice/{invoice_id}",
-    response_model=PaymentResponse,
+    response_model=InvoiceResponse,
     status_code=status.HTTP_201_CREATED,
 )
 def refund_invoice_api(
     invoice_id: int,
-    amount: Decimal,
     reason: str | None = None,
     db: Session = Depends(get_db),
 ):
@@ -26,7 +24,6 @@ def refund_invoice_api(
         return refund_payment(
             db=db,
             invoice_id=invoice_id,
-            amount=amount,
             reason=reason,
         )
     except ValueError as e:
