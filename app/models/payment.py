@@ -18,7 +18,7 @@ class Payment(Base):
     __table_args__ = (
         CheckConstraint(amount > 0, name="check_payment_amount_positive"),
         CheckConstraint(
-            payment_method.in_(["CASH", "CARD", "UPI", "BANK_TRANSFER","REFUND"]),
+            payment_method.in_(["CASH", "CARD", "UPI", "BANK_TRANSFER"]),
             name="check_payment_method"
         ),
     )
